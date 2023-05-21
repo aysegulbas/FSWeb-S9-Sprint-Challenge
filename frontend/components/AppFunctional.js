@@ -1,78 +1,173 @@
-import React from 'react'
+import axios from "axios";
+import React, { useEffect, useState } from "react";
 
 // önerilen başlangıç stateleri
-const initialMessage = ''
-const initialEmail = ''
-const initialSteps = 0
-const initialIndex = 4 //  "B" nin bulunduğu indexi
 
 export default function AppFunctional(props) {
-  // AŞAĞIDAKİ HELPERLAR SADECE ÖNERİDİR.
-  // Bunları silip kendi mantığınızla sıfırdan geliştirebilirsiniz.
+  const initialMessage = "";
+  const initialEmail = "";
+  const initialSteps = 0;
+  const initialIndex = 4; //  "B" nin bulunduğu indexi
+  // setlenmesi gerekenler; location [x,y], index(location indexi),step sayısı,mesaj,email
+  const [location, setLocation] = useState([2, 2]);
+  const [index, setIndex] = useState(initialIndex);
+  const [step, setStep] = useState(initialSteps);
+  const [message, setMessage] = useState(initialMessage);
+  const [email, setEmail] = useState(initialEmail);
 
-  function getXY() {
-    // Koordinatları izlemek için bir state e sahip olmak gerekli değildir.
-    // Bunları hesaplayabilmek için "B" nin hangi indexte olduğunu bilmek yeterlidir.
+  // fonksiyon haline getirilmesi gerekenler; email için target.value, formu submit yapmak (post-axios sonuna bir sonuç lazım, hata olursa hata mesajı), yukarı,aşağı,sağa, sol harektler (step sayısını burda artırmalıyım, else hata mesajı olmalı), reset ile initial değerlerine gitmeli, location arrayinin 0-8 arası +index karşılığının bulması
+  function onChange(e) {
+    setEmail(e.target.value);
   }
 
-  function getXYMesaj() {
-    // Kullanıcı için "Koordinatlar (2, 2)" mesajını izlemek için bir state'in olması gerekli değildir.
-    // Koordinatları almak için yukarıdaki "getXY" helperını ve ardından "getXYMesaj"ı kullanabilirsiniz.
-    // tamamen oluşturulmuş stringi döndürür.
+  function onSubmit(e) {
+    //talimatlarda aşağıdaki 4 obje için uç nokta yaratmış demiş zaten
+    e.preventDefault();
+    const sonuc = {
+      x: location[0],
+      y: location[1],
+      steps: step,
+      email: email,
+    };
+    axios
+      .post("http://localhost:9000/api/result", sonuc)
+      .then((res) => {
+        console.log(res.data);
+        setMessage(res.data.message);
+      })
+      .catch((err) => {
+        console.log(err);
+        setMessage(err.response.data.message);
+      })
+      .finally(() => {
+        setEmail(initialEmail);
+      });
+  }
+
+  function up() {
+    //x sabit kalıyor, sadece y değişir ama yeri 1'den büyük olmalı 1 eksilir,step 1 artmalı, else durumunda hata mesajı çıkmalı ama önce de set mesajı sıfırlamalıyızki orda sabit kalmasın
+    setMessage("");
+    if (location[1] > 1) {
+      setLocation([location[0], location[1] - 1]);
+      setStep(step + 1);
+    } else {
+      setMessage("Yukarıya gidemezsiniz");
+    }
+  }
+  function down() {
+    //x sabit kalıyor , sadece y değişir ama yeri 3'den küçük olmalı 1 artar,step 1 artmalı, else durumunda hata mesajı çıkmalı, ama önce de set mesajı sıfırlamalıyızki orda sabit kalmasın
+    setMessage("");
+    if (location[1] < 3) {
+      setLocation([location[0], location[1] + 1]);
+      setStep(step + 1);
+    } else {
+      setMessage("Aşağıya gidemezsiniz");
+    }
+  }
+  function right() {
+    //y sabit kalır, sadece x değişir ama yeri 3'den küçük olmalı, else durumunda hata mesajı vermeli
+    setMessage("");
+    if (location[0] < 3) {
+      setLocation([location[0] + 1, location[1]]);
+      setStep(step + 1);
+    } else {
+      setMessage("Sağa gidemezsiniz");
+    }
+  }
+  function left() {
+    //y sabit kalır  sadece x değişir ama yeri 1'den büyük olmalı 1 azalır, else durumunda hata mesajı vermeli
+    setMessage("");
+    if (location[0] > 1) {
+      setLocation([location[0] - 1, location[1]]);
+      setStep(step + 1);
+    } else {
+      setMessage("Sola gidemezsiniz");
+    }
   }
 
   function reset() {
-    // Tüm stateleri başlangıç ​​değerlerine sıfırlamak için bu helperı kullanın.
+    setLocation([2, 2]);
+    setEmail(initialEmail);
+    setMessage(initialMessage);
+    setStep(initialSteps);
   }
-
-  function sonrakiIndex(yon) {
-    // Bu helper bir yön ("sol", "yukarı", vb.) alır ve "B" nin bir sonraki indeksinin ne olduğunu hesaplar.
-    // Gridin kenarına ulaşıldığında başka gidecek yer olmadığı için,
-    // şu anki indeksi değiştirmemeli.
+  function indexHesapla() {
+    // return'de 0'dan 8'e kadar index numarasına göre active ve null hücreleri hesaplandığı için location[x,y]'e göre index numarası set etmeliyiz
+    if (location[0] === 1 && location[1] === 1) {
+      setIndex(0);
+    }
+    if (location[0] === 2 && location[1] === 1) {
+      setIndex(1);
+    }
+    if (location[0] === 3 && location[1] === 1) {
+      setIndex(2);
+    }
+    if (location[0] === 1 && location[1] === 2) {
+      setIndex(3);
+    }
+    if (location[0] === 2 && location[1] === 2) {
+      setIndex(4);
+    }
+    if (location[0] === 3 && location[1] === 2) {
+      setIndex(5);
+    }
+    if (location[0] === 1 && location[1] === 3) {
+      setIndex(6);
+    }
+    if (location[0] === 2 && location[1] === 3) {
+      setIndex(7);
+    }
+    if (location[0] === 3 && location[1] === 3) {
+      setIndex(8);
+    }
   }
-
-  function ilerle(evt) {
-    // Bu event handler, "B" için yeni bir dizin elde etmek üzere yukarıdaki yardımcıyı kullanabilir,
-    // ve buna göre state i değiştirir.
-  }
-
-  function onChange(evt) {
-    // inputun değerini güncellemek için bunu kullanabilirsiniz
-  }
-
-  function onSubmit(evt) {
-    // payloadu POST etmek için bir submit handlera da ihtiyacınız var.
-  }
+  useEffect(indexHesapla, [location]);
 
   return (
+    // location [x,y], index(location indexi),step sayısı,mesaj,email==> bunları yukarda set ettik, aşağıda denk gelenlere {} içinde yazmalıyız, ayrıca yön fonksiyonları yazdık, onları da onClick içinde yazmalıyız
+    //ama indexi {} içinde yazınca kabul etmedi neden????
     <div id="wrapper" className={props.className}>
       <div className="info">
-        <h3 id="coordinates">Koordinatlar (2, 2)</h3>
-        <h3 id="steps">0 kere ilerlediniz</h3>
+        <h3 id="coordinates">Koordinatlar ({location.join(",")})</h3>
+        <h3 id="steps">{step} kere ilerlediniz</h3>
       </div>
       <div id="grid">
-        {
-          [0, 1, 2, 3, 4, 5, 6, 7, 8].map(idx => (
-            <div key={idx} className={`square${idx === 4 ? ' active' : ''}`}>
-              {idx === 4 ? 'B' : null}
-            </div>
-          ))
-        }
+        {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((idx) => (
+          <div key={idx} className={`square${idx === index ? " active" : ""}`}>
+            {idx === index ? "B" : null}
+          </div>
+        ))}
       </div>
       <div className="info">
-        <h3 id="message"></h3>
+        <h3 id="message">{message}</h3>
       </div>
       <div id="keypad">
-        <button id="left">SOL</button>
-        <button id="up">YUKARI</button>
-        <button id="right">SAĞ</button>
-        <button id="down">AŞAĞI</button>
-        <button id="reset">reset</button>
+        <button id="left" onClick={left}>
+          SOL
+        </button>
+        <button id="up" onClick={up}>
+          YUKARI
+        </button>
+        <button id="right" onClick={right}>
+          SAĞ
+        </button>
+        <button id="down" onClick={down}>
+          AŞAĞI
+        </button>
+        <button id="reset" onClick={reset}>
+          reset
+        </button>
       </div>
-      <form>
-        <input id="email" type="email" placeholder="email girin"></input>
+      <form onSubmit={onSubmit}>
+        <input
+          id="email"
+          type="email"
+          placeholder="email girin"
+          onChange={onChange}
+          value={email}
+        ></input>
         <input id="submit" type="submit"></input>
       </form>
     </div>
-  )
+  );
 }
